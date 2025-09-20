@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stonkex"
+version = "0.1.0"
+description = "GPU-optimized transformer forecaster for candlestick data"
+authors = [{ name = "StonkEx" }]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "torch>=2.1.0",
+  "pandas>=1.5",
+  "numpy>=1.23",
+  "scikit-learn>=1.1",
+  "yfinance>=0.2",
+  "plotly>=5.17",
+  "streamlit>=1.28",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+]
+
+[tool.setuptools.packages.find]
+include = ["stonkex*"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+python_files = "test_*.py"
