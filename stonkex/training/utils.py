@@ -67,3 +67,20 @@ def tensor_to_numpy(tensor: torch.Tensor) -> np.ndarray:
 
 def log_hyperparameters(params: Dict[str, Any]) -> None:
     LOGGER.info("Training hyperparameters: %s", params)
+
+
+def describe_device(device: torch.device) -> str:
+    """Return a human-readable description of the compute device."""
+
+    if device.type == "cuda":
+        index = device.index if device.index is not None else torch.cuda.current_device()
+        name = torch.cuda.get_device_name(index)
+        capability = torch.cuda.get_device_capability(index)
+        props = torch.cuda.get_device_properties(index)
+        total_mem_gb = props.total_memory / (1024**3)
+        return (
+            f"CUDA:{index} ({name}, compute capability {capability[0]}.{capability[1]}, "
+            f"{total_mem_gb:.1f} GB VRAM)"
+        )
+    cpu_threads = os.cpu_count() or 1
+    return f"CPU ({cpu_threads} logical cores detected)"

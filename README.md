@@ -83,6 +83,8 @@ python scripts/train.py \
   --ff-dim 1024
 ```
 
+The CLI prints the active compute device (for example, `CUDA:0 (RTX 4080, …)`), making it easy to confirm that a GPU is in use. Add `--require-gpu` to fail fast if CUDA is unavailable.
+
 To train on the 70-symbol universe, point `--data-path` at the directory containing the per-symbol CSVs:
 
 ```bash
@@ -118,6 +120,29 @@ python scripts/train.py \
 ```
 
 The trainer will automatically cap the batch size at 64 for CPU runs and skip CUDA AMP. On Spaces, set `STREAMLIT_SERVER_ADDRESS=0.0.0.0` and `STREAMLIT_SERVER_PORT=7860` before launching the Streamlit apps to expose them to the public interface.
+
+### Hugging Face Gradient/Spaces on GPU
+
+To train inside a Hugging Face Space with a GPU (for example, the A10G-backed Gradient spaces), open the **Settings → Hardware** tab of your Space and select a GPU tier. Set the `HF_TOKEN` secret if you need to authenticate downloads from the Hub. A minimal `start.sh` that downloads the universe and launches GPU training looks like:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+python scripts/prepare_universe.py 2015-01-01 2024-01-01 \
+  --interval 1h \
+  --output-dir data/universe \
+  --max-bytes 2.0
+
+python scripts/train.py \
+  --data-path data/universe \
+  --device cuda \
+  --require-gpu \
+  --epochs 120 \
+  --checkpoint-every 5
+```
+
+Commit the script alongside `requirements.txt` so Spaces runs it automatically. If you need to inspect progress interactively, deploy the Streamlit dashboard (`streamlit run app/dashboard.py`) in a second Space pointed at the same artifact directory mounted via the shared persistent storage feature.
 
 Key features of the training pipeline:
 

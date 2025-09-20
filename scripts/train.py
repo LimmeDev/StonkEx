@@ -26,6 +26,7 @@ from stonkex.training.callbacks import EarlyStopping, HistoryTracker, JSONLLogge
 from stonkex.training.trainer import Trainer
 from stonkex.training.utils import (
     configure_logging,
+    describe_device,
     ensure_dir,
     log_hyperparameters,
     resolve_device,
@@ -84,6 +85,11 @@ def parse_args() -> argparse.Namespace:
         choices=["auto", "cpu", "cuda"],
         default="auto",
         help="Execution device. Defaults to GPU when available, otherwise CPU.",
+    )
+    parser.add_argument(
+        "--require-gpu",
+        action="store_true",
+        help="Error out if CUDA is unavailable. Useful for ensuring GPU-backed runs.",
     )
     return parser.parse_args()
 
@@ -156,9 +162,20 @@ def main() -> None:
     configure_logging()
     data_path = args.data_path
     device = resolve_device(args.device)
+    if args.require_gpu and device.type != "cuda":
+        raise RuntimeError(
+            "CUDA device required but not available. Select a GPU-backed runtime or disable --require-gpu."
+        )
+    if device.type == "cuda" and device.index is not None:
+        torch.cuda.set_device(device.index)
+    print(f"Using device: {describe_device(device)}")
     if device.type == "cpu" and args.batch_size > 64:
         print("Reducing batch size to 64 for CPU-only training.")
         args.batch_size = 64
+    if device.type == "cuda":
+        torch.backends.cudnn.benchmark = True
+        if hasattr(torch, "set_float32_matmul_precision"):
+            torch.set_float32_matmul_precision("high")
     mixed_precision = args.mixed_precision and device.type == "cuda"
     config = build_config(args, data_path)
     config.trainer.batch_size = args.batch_size
