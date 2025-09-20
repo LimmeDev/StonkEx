@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+*.DS_Store
+.env
+.venv/
+artifacts/
+data/
+!stonkex/data/
+.streamlit/
+*.egg-info/
